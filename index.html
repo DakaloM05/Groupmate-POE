@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GroupMate — Login</title>
+  <link rel="stylesheet" href="css/styles.css" />
+  <style>
+    body {
+      display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 24px;
+      background: linear-gradient(135deg, #1B4332 0%, #2D6A4F 55%, #52B788 100%);
+    }
+    .auth-card {
+      background: #fff; border-radius: 24px; padding: 48px 40px;
+      width: 100%; max-width: 420px; box-shadow: 0 8px 48px rgba(0,0,0,0.18);
+      animation: slideUp 0.4s ease;
+    }
+    .auth-logo { display: flex; align-items: center; gap: 10px; margin-bottom: 32px; }
+    .auth-logo-icon {
+      width: 44px; height: 44px; background: var(--primary); border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .auth-logo-text { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; }
+    .auth-logo-text span { color: var(--primary); }
+    .auth-title { font-family: 'Syne', sans-serif; font-size: 26px; font-weight: 800; margin-bottom: 6px; }
+    .auth-sub   { color: var(--text-2); font-size: 14px; margin-bottom: 28px; }
+    .auth-switch { text-align: center; margin-top: 20px; font-size: 13px; color: var(--text-2); }
+    .auth-switch a { color: var(--primary); font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div class="auth-card">
+    <div class="auth-logo">
+      <div class="auth-logo-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" width="22" height="22"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      </div>
+      <span class="auth-logo-text">Group<span>Mate</span></span>
+    </div>
+
+    <div class="auth-title">Welcome back</div>
+    <div class="auth-sub">Sign in to manage your group assignments.</div>
+
+    <div class="form-group">
+      <label class="form-label">Student Email</label>
+      <input type="email" id="email" class="form-input" placeholder="you@university.ac.za" />
+      <div class="error-msg" id="email-err">Please enter a valid email address.</div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Password</label>
+      <input type="password" id="pass" class="form-input" placeholder="••••••••" />
+      <div class="error-msg" id="pass-err">Password must be at least 6 characters.</div>
+    </div>
+
+    <button class="btn btn-solid btn-lg btn-full" onclick="doLogin()">Sign In</button>
+
+    <div class="auth-switch">
+      Don't have an account? <a href="pages/register.html">Register here</a>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+  <script src="js/shared.js"></script>
+  <script>
+    // If already logged in, go straight to dashboard
+    if (GM.user) window.location.href = 'pages/dashboard.html';
+
+    function doLogin() {
+      const email = document.getElementById('email').value.trim();
+      const pass  = document.getElementById('pass').value;
+      let ok = true;
+
+      if (!email || !email.includes('@')) {
+        document.getElementById('email').classList.add('error');
+        document.getElementById('email-err').classList.add('show');
+        ok = false;
+      } else {
+        document.getElementById('email').classList.remove('error');
+        document.getElementById('email-err').classList.remove('show');
+      }
+      if (pass.length < 6) {
+        document.getElementById('pass').classList.add('error');
+        document.getElementById('pass-err').classList.add('show');
+        ok = false;
+      } else {
+        document.getElementById('pass').classList.remove('error');
+        document.getElementById('pass-err').classList.remove('show');
+      }
+      if (!ok) return;
+
+      // Use the first default member name as the logged-in user
+      saveUser({ name: 'Thabo Mokoena', initials: 'TM' });
+      window.location.href = 'pages/dashboard.html';
+    }
+
+    // Allow Enter key to submit
+    document.addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+  </script>
+</body>
+</html>

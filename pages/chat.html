@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GroupMate — Group Chat</title>
+  <link rel="stylesheet" href="../css/styles.css" />
+  <style>
+    /* Override page-body padding for chat — full height layout */
+    .main-content { overflow: hidden; }
+    .chat-wrapper  { display: flex; height: calc(100vh - 64px); }
+  </style>
+</head>
+<body>
+<div class="app-layout">
+  <div id="sidebar-mount"></div>
+
+  <div class="main-content">
+    <div id="topbar-mount"></div>
+
+    <div class="chat-wrapper">
+      <!-- Conversation list -->
+      <div class="chat-sidebar">
+        <div style="font-size:11px;font-weight:700;color:var(--text-3);letter-spacing:1px;text-transform:uppercase;margin-bottom:12px">Conversations</div>
+
+        <a class="convo-item active" href="#">
+          <div class="avatar avatar-sm" style="background:#2D6A4F;color:white">GP</div>
+          <div>
+            <div class="convo-name">Group Project 🌿</div>
+            <div class="convo-preview">Sipho: I finished the intro!</div>
+          </div>
+        </a>
+        <a class="convo-item" href="#">
+          <div class="avatar avatar-sm" style="background:#F4A261;color:white">TM</div>
+          <div>
+            <div class="convo-name">Thabo Mokoena</div>
+            <div class="convo-preview">Can you review my section?</div>
+          </div>
+        </a>
+        <a class="convo-item" href="#">
+          <div class="avatar avatar-sm" style="background:#457B9D;color:white">NP</div>
+          <div>
+            <div class="convo-name">Nandi Pretorius</div>
+            <div class="convo-preview">Files uploaded ✓</div>
+          </div>
+        </a>
+        <a class="convo-item" href="#">
+          <div class="avatar avatar-sm" style="background:#9B5DE5;color:white">KS</div>
+          <div>
+            <div class="convo-name">Kefilwe Sithole</div>
+            <div class="convo-preview">Working on data now 📊</div>
+          </div>
+        </a>
+        <a class="convo-item" href="#">
+          <div class="avatar avatar-sm" style="background:#E76F51;color:white">LF</div>
+          <div>
+            <div class="convo-name">Luca Ferreira</div>
+            <div class="convo-preview">Mockups almost ready!</div>
+          </div>
+        </a>
+      </div>
+
+      <!-- Chat area -->
+      <div class="chat-main">
+        <div class="chat-header">
+          <div class="avatar avatar-md" style="background:#2D6A4F;color:white">GP</div>
+          <div>
+            <div style="font-weight:700;font-size:15px">Group Project 🌿</div>
+            <div style="font-size:12px;color:var(--text-3)">5 members · 3 online <span class="online-dot"></span></div>
+          </div>
+        </div>
+
+        <div class="chat-messages" id="chat-messages">
+          <!-- Seeded messages -->
+          <div class="msg-bubble">
+            <div class="avatar avatar-sm" style="background:#F4A261;color:white;align-self:flex-end">TM</div>
+            <div>
+              <div class="msg-sender">Thabo Mokoena</div>
+              <div class="msg-body">Hey team! I've updated the task board. Please check your assigned tasks and confirm you've seen them. 👀</div>
+              <div class="msg-time">09:14</div>
+            </div>
+          </div>
+          <div class="msg-bubble">
+            <div class="avatar avatar-sm" style="background:#457B9D;color:white;align-self:flex-end">NP</div>
+            <div>
+              <div class="msg-sender">Nandi Pretorius</div>
+              <div class="msg-body">Seen! I'll finish my part of the methodology by tomorrow evening.</div>
+              <div class="msg-time">09:22</div>
+            </div>
+          </div>
+          <div class="msg-bubble">
+            <div class="avatar avatar-sm" style="background:#52B788;color:white;align-self:flex-end">SM</div>
+            <div>
+              <div class="msg-sender">Sipho Mthembu</div>
+              <div class="msg-body">I finished the introduction! Just uploaded it to Files. 🎉</div>
+              <div class="msg-time">10:05</div>
+            </div>
+          </div>
+          <div class="msg-bubble mine">
+            <div class="avatar avatar-sm" style="background:#9B5DE5;color:white;align-self:flex-end">Me</div>
+            <div>
+              <div class="msg-body">Amazing Sipho! I'll review it now. Nandi, remember the literature review is overdue — can you prioritise it?</div>
+              <div class="msg-time">10:11</div>
+            </div>
+          </div>
+          <div class="msg-bubble">
+            <div class="avatar avatar-sm" style="background:#457B9D;color:white;align-self:flex-end">NP</div>
+            <div>
+              <div class="msg-sender">Nandi Pretorius</div>
+              <div class="msg-body">Sorry! On it right now. Will be done by tonight. 💪</div>
+              <div class="msg-time">10:15</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="chat-input-area">
+          <textarea class="chat-input" id="chat-input" rows="1" placeholder="Type a message… (Enter to send, Shift+Enter for new line)" onkeydown="chatKey(event)"></textarea>
+          <button class="btn btn-solid" onclick="sendMsg()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="15" height="15"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+            Send
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script src="../js/shared.js"></script>
+<script>
+  requireAuth();
+  document.getElementById('sidebar-mount').innerHTML = buildSidebar('chat');
+  document.getElementById('topbar-mount').innerHTML  = buildTopbar('Group Chat');
+
+  const replies = [
+    'Got it, thanks for the update! 👍',
+    "I'll look into that right away.",
+    "Sounds good. I'll finish my part soon.",
+    'Thanks! Noted. 📝',
+    "Great, I'll check the task board now.",
+    'On it! 💪',
+    'Understood, will update you shortly.',
+  ];
+  const replyAvatars = [
+    { ini:'SM', color:'#52B788', name:'Sipho Mthembu' },
+    { ini:'NP', color:'#457B9D', name:'Nandi Pretorius' },
+    { ini:'KS', color:'#9B5DE5', name:'Kefilwe Sithole' },
+    { ini:'LF', color:'#E76F51', name:'Luca Ferreira' },
+  ];
+
+  function chatKey(e) {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMsg(); }
+  }
+
+  function sendMsg() {
+    const input = document.getElementById('chat-input');
+    const text  = input.value.trim();
+    if (!text) return;
+
+    const msgs = document.getElementById('chat-messages');
+    const now  = new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
+    const user = GM.user || { name:'Me' };
+    const ini  = initials(user.name);
+
+    const bubble = document.createElement('div');
+    bubble.className = 'msg-bubble mine';
+    bubble.style.animation = 'slideUp 0.3s ease';
+    bubble.innerHTML = `
+      <div class="avatar avatar-sm" style="background:var(--accent);color:white;align-self:flex-end">${ini}</div>
+      <div>
+        <div class="msg-body">${escapeHtml(text)}</div>
+        <div class="msg-time">${now}</div>
+      </div>`;
+    msgs.appendChild(bubble);
+    msgs.scrollTop = msgs.scrollHeight;
+    input.value = '';
+
+    // Simulated reply
+    setTimeout(() => {
+      const r = replyAvatars[Math.floor(Math.random() * replyAvatars.length)];
+      const reply = document.createElement('div');
+      reply.className = 'msg-bubble';
+      reply.style.animation = 'slideUp 0.3s ease';
+      reply.innerHTML = `
+        <div class="avatar avatar-sm" style="background:${r.color};color:white;align-self:flex-end">${r.ini}</div>
+        <div>
+          <div class="msg-sender">${r.name}</div>
+          <div class="msg-body">${replies[Math.floor(Math.random()*replies.length)]}</div>
+          <div class="msg-time">${new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</div>
+        </div>`;
+      msgs.appendChild(reply);
+      msgs.scrollTop = msgs.scrollHeight;
+    }, 1400);
+  }
+
+  // Scroll to bottom on load
+  window.addEventListener('load', () => {
+    const msgs = document.getElementById('chat-messages');
+    msgs.scrollTop = msgs.scrollHeight;
+  });
+</script>
+</body>
+</html>

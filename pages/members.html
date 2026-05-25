@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GroupMate — Members</title>
+  <link rel="stylesheet" href="../css/styles.css" />
+  <style>
+    .member-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 22px;
+      display: flex; flex-direction: column; gap: 14px;
+      transition: box-shadow 0.15s;
+    }
+    .member-card:hover { box-shadow: var(--shadow); }
+    .members-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+    .task-pill {
+      display: flex; align-items: center; gap: 8px; padding: 8px 10px;
+      border-radius: 8px; background: var(--bg); font-size: 12px;
+    }
+    .task-pill .task-check { width:16px; height:16px; border-radius:4px; border-width:1.5px; }
+    .task-pill .task-check.done { width:16px; height:16px; }
+    .task-pill .task-check.done::after { font-size:10px; }
+  </style>
+</head>
+<body>
+<div class="app-layout">
+  <div id="sidebar-mount"></div>
+
+  <div class="main-content">
+    <div id="topbar-mount"></div>
+
+    <div class="page-body">
+      <div class="section-title" style="margin-bottom:4px">Group Members</div>
+      <div class="text-muted" style="margin-bottom:20px">5 members · submission deadline 5 June 2026</div>
+
+      <div class="members-grid" id="members-grid"></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script src="../js/shared.js"></script>
+<script>
+  requireAuth();
+  document.getElementById('sidebar-mount').innerHTML = buildSidebar('members');
+  document.getElementById('topbar-mount').innerHTML  = buildTopbar('Members');
+
+  function render() {
+    const tasks = GM.tasks;
+    document.getElementById('members-grid').innerHTML = GM.members.map(m => {
+      const myTasks   = tasks.filter(t => t.assignee === m.name);
+      const doneTasks = myTasks.filter(t => t.status === 'done');
+      const inpTasks  = myTasks.filter(t => t.status === 'in-progress');
+      const pct       = myTasks.length ? Math.round((doneTasks.length / myTasks.length) * 100) : 0;
+      const chipClass = pct === 100 ? 'chip-green' : pct >= 50 ? 'chip-orange' : 'chip-grey';
+
+      const taskPills = myTasks.slice(0,3).map(t => {
+        const isDone = t.status === 'done';
+        return `<div class="task-pill">
+          <div class="task-check ${isDone ? 'done' : t.status === 'in-progress' ? '' : ''}"></div>
+          <span style="flex:1;${isDone ? 'text-decoration:line-through;color:var(--text-3)' : ''}">${escapeHtml(t.name)}</span>
+          <span class="chip ${isDone ? 'chip-green' : t.status === 'in-progress' ? 'chip-orange' : 'chip-grey'}" style="font-size:10px">${isDone ? 'Done' : t.status === 'in-progress' ? 'In Progress' : 'To Do'}</span>
+        </div>`;
+      }).join('');
+
+      const moreTasks = myTasks.length > 3 ? `<div class="text-muted" style="padding:4px 10px">+${myTasks.length - 3} more tasks</div>` : '';
+
+      return `<div class="member-card">
+        <div style="display:flex;align-items:center;gap:14px">
+          <div class="avatar avatar-lg" style="background:${m.color};color:white">${m.initials}</div>
+          <div style="flex:1">
+            <div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:800">${escapeHtml(m.name)}</div>
+            <div class="text-muted">${m.role}</div>
+          </div>
+          <span class="chip ${chipClass}">${pct}%</span>
+        </div>
+
+        <div>
+          <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-3);margin-bottom:6px">
+            <span>${doneTasks.length} done · ${inpTasks.length} in progress</span>
+            <span>${myTasks.length} total</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill" style="width:${pct}%;background:${m.color}"></div>
+          </div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:6px">
+          ${taskPills || '<div class="text-muted" style="padding:4px">No tasks assigned yet.</div>'}
+          ${moreTasks}
+        </div>
+
+        <a href="tasks.html" class="btn btn-outline btn-sm" style="align-self:flex-start">View All Tasks</a>
+      </div>`;
+    }).join('');
+  }
+
+  render();
+</script>
+</body>
+</html>

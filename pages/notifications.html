@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GroupMate — Notifications</title>
+  <link rel="stylesheet" href="../css/styles.css" />
+</head>
+<body>
+<div class="app-layout">
+  <div id="sidebar-mount"></div>
+
+  <div class="main-content">
+    <div id="topbar-mount"></div>
+
+    <div class="page-body">
+      <div class="section-header">
+        <div class="section-title">Notifications</div>
+        <button class="btn btn-outline btn-sm" onclick="markAll()">Mark all as read</button>
+      </div>
+
+      <!-- Responding interaction type banner -->
+      <div style="background:var(--primary-pale);border:1px solid var(--primary-light);border-radius:var(--radius);padding:14px 18px;display:flex;align-items:center;gap:12px">
+        <svg viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" width="20" height="20"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        <div>
+          <div style="font-size:13px;font-weight:600;color:var(--primary)">GroupMate keeps you informed</div>
+          <div style="font-size:12px;color:var(--text-2)">You are automatically notified about deadlines, task updates, and group activity.</div>
+        </div>
+        <button class="btn btn-sm btn-solid" style="margin-left:auto" onclick="addSystemAlert()">Simulate Alert</button>
+      </div>
+
+      <div class="card">
+        <div id="notif-list"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script src="../js/shared.js"></script>
+<script>
+  requireAuth();
+  document.getElementById('sidebar-mount').innerHTML = buildSidebar('notifications');
+  document.getElementById('topbar-mount').innerHTML  = buildTopbar('Notifications');
+
+  const notifIcon = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>`;
+  const checkIcon = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>`;
+  const warnIcon  = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`;
+
+  function iconFor(type) { return type === 'green' ? checkIcon : type === 'red' ? warnIcon : notifIcon; }
+
+  function render() {
+    const list = GM.notifications;
+    if (!list.length) {
+      document.getElementById('notif-list').innerHTML = `<div class="empty-state">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="56" height="56"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        <h3>All caught up!</h3><p>No notifications right now.</p></div>`;
+      return;
+    }
+    document.getElementById('notif-list').innerHTML = list.map((n, i) => `
+      <div class="notif-item ${n.read ? '' : 'unread'}" id="notif-${i}">
+        <div class="notif-icon ${n.type}">${iconFor(n.type)}</div>
+        <div class="notif-text" style="flex:1">
+          <div class="notif-title">${escapeHtml(n.title)}</div>
+          <div class="notif-body">${escapeHtml(n.body)}</div>
+          <div class="notif-time">${n.time}</div>
+        </div>
+        ${!n.read
+          ? `<button class="btn btn-sm btn-outline" onclick="dismiss(${i})" title="Dismiss">Dismiss</button>`
+          : `<span style="font-size:11px;color:var(--text-3)">Read</span>`}
+      </div>`).join('');
+  }
+
+  function dismiss(i) {
+    GM.notifications[i].read = true;
+    render();
+    toast('Notification dismissed.', 'info');
+  }
+
+  function markAll() {
+    GM.notifications.forEach(n => n.read = true);
+    render();
+    toast('All notifications marked as read.', 'info');
+  }
+
+  // Simulate system-initiated alert (Responding interaction type)
+  const systemAlerts = [
+    { type:'orange', title:'Deadline Reminder',   body:'Results & Analysis is due in 2 days'       },
+    { type:'red',    title:'Task Overdue',         body:'Literature Review is now overdue'          },
+    { type:'green',  title:'Member Update',        body:'Kefilwe marked Data Collection as started' },
+    { type:'orange', title:'New File Uploaded',    body:'Luca uploaded UI_Mockups_v2.pptx'          },
+    { type:'green',  title:'Task Completed',       body:'Nandi completed the Methodology section'   },
+  ];
+  function addSystemAlert() {
+    const a = systemAlerts[Math.floor(Math.random() * systemAlerts.length)];
+    GM.notifications.unshift({ ...a, time: 'Just now', read: false });
+    render();
+    toast('🔔 New system alert received!', 'info');
+  }
+
+  render();
+</script>
+</body>
+</html>

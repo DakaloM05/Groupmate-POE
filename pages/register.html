@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GroupMate — Register</title>
+  <link rel="stylesheet" href="../css/styles.css" />
+  <style>
+    body {
+      display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 24px;
+      background: linear-gradient(135deg, #1B4332 0%, #2D6A4F 55%, #52B788 100%);
+    }
+    .auth-card {
+      background: #fff; border-radius: 24px; padding: 48px 40px;
+      width: 100%; max-width: 420px; box-shadow: 0 8px 48px rgba(0,0,0,0.18);
+      animation: slideUp 0.4s ease;
+    }
+    .auth-logo { display: flex; align-items: center; gap: 10px; margin-bottom: 32px; }
+    .auth-logo-icon { width: 44px; height: 44px; background: var(--primary); border-radius: 12px; display: flex; align-items: center; justify-content: center; }
+    .auth-logo-text { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; }
+    .auth-logo-text span { color: var(--primary); }
+    .auth-title { font-family: 'Syne', sans-serif; font-size: 26px; font-weight: 800; margin-bottom: 6px; }
+    .auth-sub   { color: var(--text-2); font-size: 14px; margin-bottom: 28px; }
+    .auth-switch { text-align: center; margin-top: 20px; font-size: 13px; color: var(--text-2); }
+    .auth-switch a { color: var(--primary); font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div class="auth-card">
+    <div class="auth-logo">
+      <div class="auth-logo-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" width="22" height="22"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      </div>
+      <span class="auth-logo-text">Group<span>Mate</span></span>
+    </div>
+
+    <div class="auth-title">Create account</div>
+    <div class="auth-sub">Join GroupMate and collaborate smarter.</div>
+
+    <div class="form-group">
+      <label class="form-label">Full Name</label>
+      <input type="text" id="name" class="form-input" placeholder="Your full name" />
+      <div class="error-msg" id="name-err">Please enter your full name.</div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Student Email</label>
+      <input type="email" id="email" class="form-input" placeholder="you@university.ac.za" />
+      <div class="error-msg" id="email-err">Please enter a valid email address.</div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Password</label>
+      <input type="password" id="pass" class="form-input" placeholder="Minimum 6 characters" />
+      <div class="error-msg" id="pass-err">Password must be at least 6 characters.</div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Confirm Password</label>
+      <input type="password" id="pass2" class="form-input" placeholder="Repeat your password" />
+      <div class="error-msg" id="pass2-err">Passwords do not match.</div>
+    </div>
+
+    <button class="btn btn-solid btn-lg btn-full" onclick="doRegister()">Create Account</button>
+
+    <div class="auth-switch">
+      Already have an account? <a href="../index.html">Sign in</a>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+  <script src="../js/shared.js"></script>
+  <script>
+    function validate(id, errId, condition) {
+      const valid = condition(document.getElementById(id).value);
+      document.getElementById(id).classList.toggle('error', !valid);
+      document.getElementById(errId).classList.toggle('show', !valid);
+      return valid;
+    }
+
+    function doRegister() {
+      const name  = document.getElementById('name').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const pass  = document.getElementById('pass').value;
+      const pass2 = document.getElementById('pass2').value;
+
+      const v1 = validate('name',  'name-err',  v => v.length > 1);
+      const v2 = validate('email', 'email-err', v => v.includes('@') && v.length > 4);
+      const v3 = validate('pass',  'pass-err',  v => v.length >= 6);
+      const v4 = validate('pass2', 'pass2-err', v => v === pass);
+
+      if (!v1 || !v2 || !v3 || !v4) return;
+
+      saveUser({ name, initials: initials(name) });
+      window.location.href = 'dashboard.html';
+    }
+
+    document.addEventListener('keydown', e => { if (e.key === 'Enter') doRegister(); });
+  </script>
+</body>
+</html>

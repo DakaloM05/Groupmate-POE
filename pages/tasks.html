@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GroupMate — Tasks</title>
+  <link rel="stylesheet" href="../css/styles.css" />
+</head>
+<body>
+<div class="app-layout">
+  <div id="sidebar-mount"></div>
+
+  <div class="main-content">
+    <div id="topbar-mount"></div>
+
+    <div class="page-body">
+      <div class="section-header">
+        <div class="section-title">All Tasks</div>
+        <button class="btn btn-solid" onclick="openModal()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="15" height="15"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Assign Task
+        </button>
+      </div>
+
+      <!-- Filter bar -->
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-sm btn-solid"   id="filter-all"         onclick="setFilter('all')">All</button>
+        <button class="btn btn-sm btn-outline"  id="filter-todo"        onclick="setFilter('todo')">To Do</button>
+        <button class="btn btn-sm btn-outline"  id="filter-in-progress" onclick="setFilter('in-progress')">In Progress</button>
+        <button class="btn btn-sm btn-outline"  id="filter-done"        onclick="setFilter('done')">Done</button>
+      </div>
+
+      <div class="card">
+        <div id="task-list"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add Task Modal -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <div class="modal-title">Assign New Task</div>
+    <div class="modal-sub">Fill in the details and assign to a group member.</div>
+
+    <div class="form-group">
+      <label class="form-label">Task Name</label>
+      <input type="text" id="t-name" class="form-input" placeholder="e.g. Write Literature Review" />
+      <div class="error-msg" id="t-name-err">Task name is required.</div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Description (optional)</label>
+      <textarea id="t-desc" class="form-textarea" placeholder="What needs to be done?"></textarea>
+    </div>
+    <div class="form-row">
+      <div class="form-group" style="margin-bottom:0">
+        <label class="form-label">Assign To</label>
+        <select id="t-assignee" class="form-select">
+          <option value="">Select member…</option>
+          <option>Thabo Mokoena</option>
+          <option>Sipho Mthembu</option>
+          <option>Nandi Pretorius</option>
+          <option>Kefilwe Sithole</option>
+          <option>Luca Ferreira</option>
+        </select>
+        <div class="error-msg" id="t-assignee-err">Please assign to a member.</div>
+      </div>
+      <div class="form-group" style="margin-bottom:0">
+        <label class="form-label">Deadline</label>
+        <input type="date" id="t-date" class="form-input" />
+        <div class="error-msg" id="t-date-err">Please set a deadline.</div>
+      </div>
+    </div>
+    <div class="form-group" style="margin-top:16px">
+      <label class="form-label">Priority</label>
+      <select id="t-priority" class="form-select">
+        <option value="medium">Medium</option>
+        <option value="high">High</option>
+        <option value="low">Low</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-solid"   onclick="addTask()">Assign Task</button>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Confirm -->
+<div id="confirm-mount"></div>
+<div class="toast" id="toast"></div>
+
+<script src="../js/shared.js"></script>
+<script>
+  requireAuth();
+  document.getElementById('sidebar-mount').innerHTML = buildSidebar('tasks');
+  document.getElementById('topbar-mount').innerHTML  = buildTopbar('Tasks');
+  document.getElementById('confirm-mount').innerHTML = confirmDialogHTML();
+
+  // Set tomorrow as default date
+  const tmr = new Date(); tmr.setDate(tmr.getDate()+1);
+  document.getElementById('t-date').value = tmr.toISOString().slice(0,10);
+
+  let currentFilter = 'all';
+  let deleteId = null;
+
+  function setFilter(f) {
+    currentFilter = f;
+    ['all','todo','in-progress','done'].forEach(id => {
+      const el = document.getElementById('filter-' + id);
+      if (el) { el.className = 'btn btn-sm ' + (id === f ? 'btn-solid' : 'btn-outline'); }
+    });
+    render();
+  }
+
+  function render() {
+    let tasks = GM.tasks;
+    if (currentFilter !== 'all') tasks = tasks.filter(t => t.status === currentFilter);
+    const el = document.getElementById('task-list');
+    if (!tasks.length) {
+      el.innerHTML = `<div class="empty-state">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="56" height="56"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        <h3>No tasks here</h3><p>Try a different filter or add a new task.</p></div>`;
+      return;
+    }
+    el.innerHTML = tasks.map(t => taskHTML(t, true)).join('');
+  }
+
+  function toggleTask(id) {
+    const tasks = GM.tasks;
+    const t = tasks.find(x => x.id === id);
+    if (!t) return;
+    t.status = t.status === 'done' ? 'todo' : 'done';
+    GM.saveTasks(tasks);
+    toast(t.status === 'done' ? '🎉 Task completed!' : 'Task marked as to-do.', t.status === 'done' ? 'success' : 'info');
+    render();
+  }
+
+  function askDelete(id) { deleteId = id; document.getElementById('confirm-delete').classList.add('open'); }
+  function closeConfirm() { document.getElementById('confirm-delete').classList.remove('open'); deleteId = null; }
+  function confirmDelete() {
+    const tasks = GM.tasks.filter(t => t.id !== deleteId);
+    GM.saveTasks(tasks);
+    closeConfirm();
+    toast('Task deleted.', 'danger');
+    render();
+  }
+
+  function openModal()  { document.getElementById('modal').classList.add('open'); }
+  function closeModal() { document.getElementById('modal').classList.remove('open'); clearForm(); }
+  document.getElementById('modal').addEventListener('click', e => { if (e.target === document.getElementById('modal')) closeModal(); });
+
+  function clearForm() {
+    ['t-name','t-desc'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('t-assignee').value = '';
+    document.getElementById('t-priority').value = 'medium';
+    const tmr = new Date(); tmr.setDate(tmr.getDate()+1);
+    document.getElementById('t-date').value = tmr.toISOString().slice(0,10);
+  }
+
+  function fieldOk(id, errId, check) {
+    const val = document.getElementById(id).value;
+    const ok  = check(val);
+    document.getElementById(id).classList.toggle('error', !ok);
+    document.getElementById(errId).classList.toggle('show', !ok);
+    return ok;
+  }
+
+  function addTask() {
+    const v1 = fieldOk('t-name',     't-name-err',     v => v.trim().length > 0);
+    const v2 = fieldOk('t-assignee', 't-assignee-err', v => v !== '');
+    const v3 = fieldOk('t-date',     't-date-err',     v => v !== '');
+    if (!v1 || !v2 || !v3) return;
+
+    const tasks = GM.tasks;
+    tasks.push({
+      id:       Date.now(),
+      name:     document.getElementById('t-name').value.trim(),
+      assignee: document.getElementById('t-assignee').value,
+      deadline: document.getElementById('t-date').value,
+      status:   'todo',
+      priority: document.getElementById('t-priority').value,
+    });
+    GM.saveTasks(tasks);
+    closeModal();
+    toast('Task assigned successfully! ✓', 'success');
+    render();
+  }
+
+  render();
+</script>
+</body>
+</html>
